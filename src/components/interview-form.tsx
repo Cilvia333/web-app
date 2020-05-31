@@ -52,6 +52,55 @@ const InterviewForm: FC = () => {
   );
   const [karteItem, setKarteItem] = useState(InitialKarteItem);
 
+  const [timeStringError, setTimeStringError] = useState(false);
+  const [minuteStringError, setMinuteStringError] = useState(false);
+
+  const isTimeStringValidate = (timeString: string) => {
+    setTimeStringError(false);
+    const trueString = new RegExp('([0-1]\\d|2[0-3]):[0-5]\\d$');
+    if (!timeString.match(trueString)) {
+      console.log('00:00じゃない');
+      console.log(timeString);
+      setTimeStringError(true);
+    }
+    console.log(timeStringError);
+    return timeStringError;
+  };
+
+  const isMinuteStringValidate = (minuteString: string) => {
+    setMinuteStringError(false);
+    if (
+      Number.parseInt(minuteString) < 10 ||
+      Number.parseInt(minuteString) > 120
+    ) {
+      console.log('10~120');
+      console.log(minuteString);
+      setMinuteStringError(true);
+    }
+    console.log(minuteStringError);
+    return minuteStringError;
+  };
+
+  const handleTimeStringChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    isTimeStringValidate(event.target.value);
+    setKarteItem({
+      ...karteItem,
+      timeString: event.target.value,
+    });
+  };
+
+  const handleMinuteStringChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    isMinuteStringValidate(event.target.value);
+    setKarteItem({
+      ...karteItem,
+      minuteString: event.target.value,
+    });
+  };
+
   const onClickSubmit = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
@@ -77,31 +126,29 @@ const InterviewForm: FC = () => {
     timeFrom: string,
     maxPerDay: string
   ) => {
-    const response = await fetch(
-      'http://localhost:3000/api/generate-schedule',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          booktitle,
-          purpose,
-          base,
-          level,
-          habit,
-          goodAt,
-          timeFrom,
-          maxPerDay,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const response = await fetch('/api/generate-schedule', {
+      method: 'POST',
+      body: JSON.stringify({
+        booktitle,
+        purpose,
+        base,
+        level,
+        habit,
+        goodAt,
+        timeFrom,
+        maxPerDay,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     const json = await response.json();
     if (json.s3URL) {
+      console.log(json);
       dispatch({
         type: types.update,
         payload: {
-          book: {
+          schedule: {
             ...scheduleState,
             s3URL: json.s3URL,
             comment: json.comment,
@@ -181,12 +228,8 @@ const InterviewForm: FC = () => {
               <TextInput
                 name="time"
                 value={karteItem.timeString}
-                onChange={(event) => {
-                  setKarteItem({
-                    ...karteItem,
-                    timeString: event.target.value,
-                  });
-                }}
+                isError={timeStringError}
+                onChange={handleTimeStringChange}
               />
               <TimeText>時から</TimeText>
             </TimeInputWrapper>
@@ -194,12 +237,8 @@ const InterviewForm: FC = () => {
               <NumberInput
                 name="minute"
                 value={karteItem.minuteString}
-                onChange={(event) => {
-                  setKarteItem({
-                    ...karteItem,
-                    minuteString: event.target.value,
-                  });
-                }}
+                isError={minuteStringError}
+                onChange={handleMinuteStringChange}
               />
               <TimeText>分間</TimeText>
             </TimeInputWrapper>
